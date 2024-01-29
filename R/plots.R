@@ -3,15 +3,16 @@
 #' @description A plot with two panels. The top panel shows the MCMC output. The bottom panel shows the individually calibrated dates (in downward light gray) as well as the modelled ages constrained by chronological ordering (upward dark-grey) and lines with the hpd ranges (black). Any similarity with swimming elephants or island chains is coincidental.
 #' @param name Name of the stratigraphy dataset. Defaults to \code{"mystrat"}.
 #' @param set This option reads the 'info' variable, which contains the data and the model output.
+#' @param structure Information about the structure (e.g., blocks, gaps, dates, undated levels) of the dataset. Filled automatically.
 #' @param y.scale The scale of the vertical axis of the main plot. This can be the positions of the dated levels (`positions`) or their position order (`dates`). 
 #' @param strat.dir The directory where the folders of the individual stratigraphies live. Defaults to \code{start.dir="strats"}.
 #' @param cc.dir Directory of calibration curve. Keep empty for the default value.
 #' @param sep Separator for the fields in the .csv file. Defaults to a comma.
 #' @param postbomb Negative C-14 ages should be calibrated using a postbomb curve. This could be 1 (northern-hemisphere region 1), 2 (NH region 2), 3 (NH region 3), 4 (southern hemisphere regions 1-2), or 5 (SH region 3).
-#' @param calibrated.ex Exaggeration of the heights of the calibrated distributions. Defaults to 0.5. Note that more precise dates peak higher than dates with lower precision.
+#' @param calibrated.ex Exaggeration of the heights of the calibrated distributions. Calculated automatically by default. Note that more precise dates peak higher than dates with lower precision.
 #' @param calibrated.mirror Whether or not the individually calibrated (but not the modelled) distributions should be drawn both up and down, quite a bit like fish or swans. Defaults to FALSE.
 #' @param calibrated.up Whether the calibrated distributions should be drawn upward or downward (the default, resembling the reflections of islands in the sea, or swimming animals if you wish)
-#' @param modelled.ex Exaggaration of the heights of the age-modelled distributions. Defaults to 0.5. Note that more precise ages peak higher than ages with lower precision.
+#' @param modelled.ex Exaggaration of the heights of the age-modelled distributions. Calculated automatically by default. Note that more precise ages peak higher than ages with lower precision.
 #' @param modelled.mirror Whether or not the age-modelled distributions should be drawn both up and down, quite a bit like fish or swans. Defaults to FALSE.
 #' @param modelled.up Whether the age-modelled distributions should be drawn downward or upward (the default, resembling islands in the sea)
 #' @param BCAD The calendar scale of graphs and age output-files is in \code{cal BP} by default, but can be changed to BC/AD using \code{BCAD=TRUE}.
@@ -21,12 +22,15 @@
 #' @param xbottom.lab The label for the x-axis of the bottom panel showing the age-model output. Defaults to \code{"cal BP"} or \code{"BC/AD"}.
 #' @param ybottom.lab The label for the y-axis of the bottom panel showing the age-model output. Defaults to \code{"position"}.
 #' @param calibrated.col Colour of the inside of the unmodelled, calibrated ages. Defaults to semi-transparent light grey, \code{rgb(0,0,0,0.5}.
-#' @param calibrated.border Colour of the border of the unmodelled, calibrated ages. Defaults to nothing, NA.
+#' @param calibrated.border Colour of the border of the unmodelled non-14C ages. Defaults to nothing, NA.
+#' @param calBP.col Colour of the inside of the unmodelled non-14C ages. Defaults to semi-transparent light grey, \code{rgb(0,0,0,0.5}.
+#' @param calBP.border Colour of the border of the unmodelled, calibrated ages. Defaults to nothing, NA.
 #' @param modelled.col Colour of the inside of the modelled ages. Defaults to semi-transparent dark grey, \code{rgb(0,0,0,0.5}.
 #' @param modelled.border Colour of the border of the modelled ages. Defaults to semi-transparent dark grey, \code{rgb(0,0,0,0.5}.
 #' @param range.col Colour of the hpd ranges. Defaults to \code{"black"}.
 #' @param block.col Colour of the field indicating unordered dates within a 'block'. Defaults to light-blue, \code{rgb(0,0,1,.05)}.
-#' @param gap.col Colour of the diagonal lines and parameters of any gaps
+#' @param gap.col Colour of the diagonal lines and parameters of any gaps.
+#' @param gap.pos Plotting position of the gap information.
 #' @param simulation Whether or not the data are part of a simulated stratigraphy.
 #' @param simulation.col If the data are part of a simulated stratigraphy, the 'true' ages can also be plotted.
 #' @param pos.lim Limit of the main y-axis.
@@ -36,12 +40,13 @@
 #' @param mar.bottom Margins around the bottom panel. Defaults to \code{mar.bottom=c(3,3,0.5,1)}.
 #' @param heights Relative heights of the two panels in the plot. Defaults to 0.3 for the top and 0.7 for the bottom panel.
 #' @param iterations.warning Whether or not to plot a warning if there are < 3000 iterations, too few for a reliable MCMC run.
+#' @param min.its The minimum amount of iterations, below which a warning is printed (if \code{iterations.warning=TRUE}). Defaults to 1,000. 
 #' @param warning.loc Location of the warning
 #' @param warning.col Colour of the warning - defaults to red.
 #' @return A plot with two panels showing the MCMC run and the calibrated and modelled ages.
 #' @author Maarten Blaauw
 #' @export
-draw.strat <- function(name="mystrat", set=get('info'), y.scale="positions", strat.dir="strats", cc.dir=c(), sep=",", postbomb=FALSE, calibrated.ex=.5, calibrated.mirror=FALSE, calibrated.up=TRUE, modelled.ex=0.5, modelled.mirror=FALSE, modelled.up=FALSE, BCAD=FALSE, threshold=0.001, xtop.lab=c(), ytop.lab=c(), xbottom.lab=c(), ybottom.lab="position", calibrated.col=rgb(0, 0, 0, 0.2), calibrated.border=NA, modelled.col=rgb(0,0,0,0.5), modelled.border=rgb(0,0,0,0.5), range.col="black", block.col=rgb(0,0,1,.05), gap.col="blue", simulation=FALSE, simulation.col=grey(0.5), pos.lim=c(), age.lim=c(), mgp=c(2, 0.7, 0), mar.top=c(3,3,1,1), mar.bottom=c(3,3,0.5,1), heights=c(0.3, 0.7), iterations.warning=TRUE, warning.loc="bottomleft", warning.col="red") {
+draw.strat <- function(name="mystrat", set=get('info'), structure=set$struc, y.scale="positions", strat.dir="strats", cc.dir=c(), sep=",", postbomb=FALSE, calibrated.ex=c(), calibrated.mirror=FALSE, calibrated.up=TRUE, modelled.ex=c(), modelled.mirror=FALSE, modelled.up=FALSE, BCAD=FALSE, threshold=0.001, xtop.lab=c(), ytop.lab=c(), xbottom.lab=c(), ybottom.lab="position", calibrated.col=rgb(0, 0, 0, 0.2), calibrated.border=NA, calBP.col=rgb(0, 0, 0, 0.2), calBP.border=NA, modelled.col=rgb(0,0,0,0.5), modelled.border=rgb(0,0,0,0.5), range.col="black", block.col=rgb(0,0,1,.05), gap.col="blue", gap.pos=1, simulation=FALSE, simulation.col=grey(0.5), pos.lim=c(), age.lim=c(), mgp=c(2, 0.7, 0), mar.top=c(3,3,1,1), mar.bottom=c(3,3,0.5,1), heights=c(0.3, 0.7), iterations.warning=TRUE, min.its=1e3, warning.loc="bottomleft", warning.col="red") {
   layout(matrix(1:2, ncol=1), heights=heights)
   oldpar <- par(no.readonly = TRUE)
   #on.exit(par(oldpar))
@@ -65,37 +70,49 @@ draw.strat <- function(name="mystrat", set=get('info'), y.scale="positions", str
     ytop.lab <- "energy"
   plot(-1*energy, type="l", xlab=xtop.lab, ylab=ytop.lab)
   if(iterations.warning)
-    if(nrow(set$output) < 3e3) # then MCMC run likely not long enough to be reliable
+    if(nrow(set$output) < min.its) # then MCMC run likely not long enough to be reliable
       legend(warning.loc, legend="short MCMC run - needs more iterations", bty="n", cex=.8, text.col=warning.col)
 
   dates <- which(dets[,5] %in% 0:4)
   ages.positions <- dets[which(dets[,5] %in% c(0:4,10)),4]
+  if(y.scale[1] == "dates")
+   ages.positions <- 1:length(ages.positions)
 
   if(y.scale[1] == "positions")
-	y.scale <- dets[dates,4]
+    y.scale <- dets[dates,4]
   if(y.scale[1] == "dates")
-	y.scale <- 1:length(dates)   
+    y.scale <- 1:length(dates)
   if(length(pos.lim) == 0)
-	pos.lim <- extendrange(y.scale, f=0.1)  
+    pos.lim <- extendrange(y.scale, f=0.1)
+
+  # calculate highest prob of all dates, prior to drawing
+  calib.mx <- 0
+  for(i in 1:length(dates)) {
+    tmp <- caldist(dets[dates[i],2], dets[dates[i],3], cc = dets[dates[i],5], cc.dir = cc.dir)
+    calib.mx <- max(calib.mx, tmp[, 2])
+  }
+  calib.ex <- .05 / (calib.mx * nrow(dets)^1.2)
+  if(length(calibrated.ex) == 0) 
+    calibrated.ex <- calib.ex  
+  
+  mod.mx <- 0
+  for(i in 1:ncol(ages))
+    mod.mx <- max(mod.mx, density(ages[,i])$y)
+  if(length(modelled.ex) == 0)    	
+    modelled.ex <- .02 / (mod.mx * nrow(dets)^1.2)
 
   par(mar=mar.bottom)
-  dates <- draw.dates(dets[dates,2], dets[dates,3], y.scale, dets[dates,5], cc.dir=cc.dir, postbomb=postbomb, ex=calibrated.ex, mirror=calibrated.mirror, up=calibrated.up, col=calibrated.col, border=calibrated.border, BCAD=BCAD, draw.hpd=FALSE, threshold=threshold, normalise=TRUE, cal.lab=xbottom.lab, d.lab=ybottom.lab, age.lim=age.lim, d.lim=pos.lim)
+  Dates <- draw.dates(dets[dates,2], dets[dates,3], y.scale, dets[dates,5], cc.dir=cc.dir, postbomb=postbomb, ex=calibrated.ex, mirror=calibrated.mirror, up=calibrated.up, col=calibrated.col, border=calibrated.border, cal.col=calBP.col, cal.border=calBP.border, BCAD=BCAD, draw.hpd=FALSE, threshold=threshold, normalise=FALSE, cal.lab=xbottom.lab, d.lab=ybottom.lab, age.lim=age.lim, d.lim=pos.lim)
 
-  if(any(diff(dets[,4]) == 0)) { # then there are blocks of dates 
-    block <- rep(0, nrow(dets))  
-    k <- 1
-    for(i in 2:(nrow(dets)-1)) {
-      if((dets[i,4] == dets[i-1,4]) || (dets[i,4] == dets[i+1,4])) { # we're in a block	
-        block[i] <- k
-        if(dets[i,4] < dets[i+1,4]) # we're at the end of the block
-          k <- k+1
-	  }
-	}
-    above <- which(diff(block) > 0)
-	below <- which(diff(block) < 0) + 1
-	y.above <- mean(y.scale[(above+1):above])
-	y.below <- mean(y.scale[(below-1):below])
-	rect(min(.1*dets[,2],-9e9), y.above, max(2*dets[,2], 9e9), y.below, col=block.col, border=NA)
+  if(set$struc$has.blocks) {
+    above <- set$struc$above.block
+    below <- set$struc$below.block
+    y.above <- c(); y.below <- c()
+    for(i in 1:length(above)) {
+      y.above[i] <- mean(y.scale[above[i]+c(0,1)])
+      y.below[i] <- mean(y.scale[below[i]-c(0,1)])
+    }
+    rect(min(.1*dets[,2],-9e6), y.above, max(2*dets[,2], 9e6), y.below, col=block.col, border=NA)
   }
  
   maxdens <- 0
@@ -121,33 +138,38 @@ draw.strat <- function(name="mystrat", set=get('info'), y.scale="positions", str
     if(!is.na(range.col))
       segments(hpds[[i]][,1], ages.positions[i], hpds[[i]][,2], ages.positions[i], col=range.col, lwd=2)
   }
-  
-  pos.dates <- which(dets[,5] %in% c(0:4,10))
-  pos.gaps <- which(dets[,5] > 10)
-  if(length(pos.gaps) > 0) {
-    for(i in pos.gaps) {
-	  above <- max(which(pos.dates < i))
-      below <- min(which(pos.dates > i))
-      age.above <- hpds[[max(which(pos.dates < i))]][2]
-      segments(age.above, dets[pos.dates[above],4], 
-        age.above+dets[i,2], dets[pos.dates[below],4], col=gap.col)
-      if(dets[i,5] == 11)
-	    text(age.above, mean(c(above, below)),
-	      paste0("Ex(", dets[i,2], ")"), cex=0.5, col=gap.col, adj=c(0, .5))
-      if(dets[i,5] == 12)
-        text(age.above, mean(c(above, below)),
-          paste0("N(", dets[i,2], ",", dets[i,3], ")"), cex=0.5, col=gap.col, adj=c(0, .5))
-      if(dets[i,5] == 13)
-        text(age.above, mean(c(above, below)),
-          paste0("Ga(", dets[i,2], ",", dets[i,3], ")"), cex=0.5, col=gap.col, adj=c(0, .5))
+
+  if(structure$has.gaps) {
+    gaps <- structure$gaps
+    for(i in 1:nrow(gaps)) {
+      above <- max(which(structure$p < gaps[i,4]))
+      side <- ifelse(gap.pos==1, 1, 2)
+      if(gap.pos==1) {
+        age.above <- max(hpds[[above]][,-3])
+        age.below <- max(hpds[[above+1]][,-3])
+        } else {
+          age.above <- min(hpds[[above]][,-3])
+          age.below <- min(hpds[[above+1]][,-3])
+        }
+      segments(age.above, dets[above,4],
+        age.above+gaps[i,2], dets[above+1,4], col=gap.col)
+      adj <- ifelse(gap.pos==1, c(1,.5), c(0,.5))
+      xpos <- ifelse(gap.pos==1, age.below, age.above)
+      if(gaps[i,5] == 11)
+        txt <- paste0("Ex(", gaps[i,2], ")") else
+          if(gaps[i,5] == 12)
+            txt <- paste0("N(", gaps[i,2], ",", gaps[i,3], ")") else
+              if(gaps[i,5] == 13)
+                txt <- paste0("Ga(", gaps[i,2], ",", gaps[i,3], ")")
+      text(xpos, mean(c(dets[above,4], dets[above+1,4])), txt, cex=0.5, col=gap.col, adj=adj)
     }
   }
   
-  set$hpds <- hpds
-  set$dates <- dates
-   
-  assign_to_global("info", set)
-  invisible(dates)
+  #set$hpds <- hpds
+  #set$dates <- dates 
+  #assign_to_global("info", set)
+  Dates$hpds <- hpds 
+  invisible(Dates)
 }
 
 
@@ -192,8 +214,8 @@ draw.strat <- function(name="mystrat", set=get('info'), y.scale="positions", str
 #' @return A plot with the calibrated distributions of the individual dates and the wiggle-match distributions (top), and the dates on the calibration curve together with the age distribution for the earliest ring, 0.
 #' @examples
 #'   treedir <- tempdir()
-#'   rings("Ulandryk4", tree.dir=treedir, draw=FALSE)
-#'   draw.rings("Ulandryk4", tree.dir=treedir)
+#'   rings("Ulandryk", tree.dir=treedir, draw=FALSE)
+#'   draw.rings("Ulandryk", tree.dir=treedir)
 #' @author Maarten Blaauw, J. Andres Christen
 #' @export
 draw.rings <- function(name="mytree", tree.dir="trees", sep=",", normal=TRUE, dat=c(), out=c(), cc=1, postbomb=FALSE, BCAD=FALSE, t.a=3, t.b=4, x.lim=c(), x1.axis=TRUE, x1.labels=FALSE, x1.lab=c(), rev.x=FALSE, y1.lab=c(), y1.lim=c(), y2.lim=c(), x2.lab=c(), y2.lab=c(), ex=0.05, plot.cc=TRUE, plot.dists=TRUE, mar.1=c(1,3,1,1), mar.2=c(3,3,0,1), mgp=c(1.7, .7, 0), dist.res=500, date.col="steelblue", cc.col=rgb(0, 0.5, 0, 0.5), dist.col=rgb(0,0,0,0.5), calib.col=rgb(0,0,1,0.25), range.col="black", set.layout=TRUE) {

@@ -100,7 +100,7 @@ G4U <- function( nphi, phi, h, x, xp) {
 ############ PlotObj=FALSE. See examples.R for details.
 ############ 4 kernels: traverse, walk, blow or hop
 ############ MB: removed plot options, now only stores every 'thinning' iterations
-Runtwalk <- function(Tr, Obj, Supp, dat, dim = length(x0), x0=x0, xp0=xp0, at=6, aw=1.5, pphi=min( dim, 4)/dim, F1=0.4918, F2=F1+0.4918, F3=F2+0.0082, thinning=100, cumulative=FALSE, out.fl=c(), energy.fl=c(), ...) {
+Runtwalk <- function(Tr, Obj, Supp, dat, dim = length(x0), x0=x0, xp0=xp0, at=6, aw=1.5, pphi=min( dim, 4)/dim, F1=0.4918, F2=F1+0.4918, F3=F2+0.0082, thinning=100, cumulative=FALSE, out.fl=c(), energy.fl=c(), show.progress=TRUE, ...) {
 
   ## Initial values
   x <- x0
@@ -126,21 +126,22 @@ Runtwalk <- function(Tr, Obj, Supp, dat, dim = length(x0), x0=x0, xp0=xp0, at=6,
     Tr <- 0
   }
 
-  every <- ceiling(Tr/thinning) # find how many sub-runs to run
-  pb <- txtProgressBar(min=0, max=Tr, style = 3, char=">")
+  write.MCMC <- ifelse(length(out.fl) == 0, FALSE, TRUE) 
 
-  if(length(out.fl) > 0) { # then we'll save the its in files while running
-    if(file.exists(out.fl))
-     file.remove(out.fl)
-    if(file.exists(energy.fl))
-      file.remove(energy.fl)
+  every <- ceiling(Tr/thinning) # find how many sub-runs to run
+  if(!write.MCMC) {
+      rec <- array(NA, dim=c(every, 2*c(1+length(x))))
+      recacc <- array(NA, dim=c(every, 2))
   }
-	  
+
+  if(show.progress)
+    pb <- txtProgressBar(min=0, max=Tr, style = 3, char=">")
+
   acc <- 0
-  j <- 0
   for(i in 1:Tr) {
-    if(i %% 100)
-      setTxtProgressBar(pb, i)
+    if(show.progress)
+      if(i %% 100)
+        setTxtProgressBar(pb, i)
     move <- OneMove(dim=dim, Obj=Obj, Supp=Supp, x, U, xp, Up, at=at, aw=aw, pphi=pphi, F1=F1, F2=F2, F3=F3, ...)
     if(runif(1) < move$A) { # proposed iteration accepted
       tmp.recacc <- c(move$funh, move$nphi/dim)
@@ -153,23 +154,21 @@ Runtwalk <- function(Tr, Obj, Supp, dat, dim = length(x0), x0=x0, xp0=xp0, at=6,
          tmp.recacc <- c(move$funh, 0)
 
     # sub-runs to reduce the amount of iterations to be stored
-    j <- j+1
-    if(j == thinning) { # then store the iteration
-	  if(length(out.fl) > 0) {
-        fastwrite(t(c(U, Up, x, xp)), out.fl, append=TRUE, sep=",", row.names=FALSE, col.names=FALSE)		  
-        fastwrite(t(tmp.recacc), energy.fl, append=TRUE, sep=",", row.names=FALSE, col.names=FALSE)
-	  } else {
-        rec <- rbind(rec, c(U, Up, x, xp))
-        recacc <- rbind(recacc, tmp.recacc) # add
-      }
-      j <- 0 # reset
+    if(i %% thinning == 0) { # then store the iteration
+      if(write.MCMC) {  
+        fastwrite(t(c(U, Up, x, xp)), out.fl, append=TRUE, row.names=FALSE, col.names=FALSE)		  
+        fastwrite(t(tmp.recacc), energy.fl, append=TRUE, row.names=FALSE, col.names=FALSE)
+      } else {
+          rec[i/thinning,] <- c(U, Up, x, xp)
+          recacc[i/thinning,] <- tmp.recacc
+        }
     }
   }
   message("\nDone running...")
 
   if(length(out.fl) > 0) {
-    rec <- fastread(out.fl, header=FALSE, sep=",") 
-    recacc <- fastread(energy.fl, header=FALSE, sep=",")
+    rec <- fastread(out.fl, header=FALSE) 
+    recacc <- fastread(energy.fl, header=FALSE)
   }
 
   list( dim=dim, Tr=Tr, acc=acc, Us=rec[,1], Ups=rec[,2],
@@ -480,12 +479,12 @@ GetAutoCov <- function( dt, lags) {
 IAT <- function(set, par=0, from=1, to) {
   ## -lag/log(GetAutoCorr( info, lag, par=par, from=from, to=to))
   ## we get the desired time series, the parameter and the from - to selection
-  if(par>0) {
+  if(par > 0) {
     if(set$dim > 1)
       dt <- set$output[from:to, par] else
         dt <- set$output[from:to]
   } else
-    dt <-  set$Us[from:to]
+    dt <- set$Us[from:to]
 
   n <- to-from
   mu <- mean(dt)  ### with its mean and variance

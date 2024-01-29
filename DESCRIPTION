@@ -1,7 +1,7 @@
 Package: coffee
 Type: Package
 Title: Chronological Ordering for Fossils and Environmental Events
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: c(
   person("Maarten", "Blaauw", email = "maarten.blaauw@qub.ac.uk", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-5680-1515")),
       person(given = "Marco A.",
@@ -15,16 +15,16 @@ Description: While individual calibrated radiocarbon dates can span several cent
 License: GPL (>= 2)
 Encoding: UTF-8
 URL: https://github.com/Maarten14C/coffee
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 NeedsCompilation: no
 Language: en-GB
 VignetteBuilder: knitr
 Suggests: knitr, rmarkdown, utf8
 Imports: data.table
 Depends: rintcal (>= 0.6.1)
-Packaged: 2023-07-14 18:05:56 UTC; maarten
+Packaged: 2024-01-28 17:03:30 UTC; maarten
 Author: Maarten Blaauw [aut, cre] (<https://orcid.org/0000-0002-5680-1515>),
   Marco A. Aquino Lopez [aut] (<https://orcid.org/0000-0002-5076-7205>),
   J. Andres Christen [ctb, cph] (<https://orcid.org/0000-0002-5795-4345>)
 Repository: CRAN
-Date/Publication: 2023-07-14 18:20:02 UTC
+Date/Publication: 2024-01-29 09:40:10 UTC
