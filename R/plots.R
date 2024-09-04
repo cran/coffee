@@ -12,7 +12,7 @@
 #' @param calibrated.ex Exaggeration of the heights of the calibrated distributions. Calculated automatically by default. Note that more precise dates peak higher than dates with lower precision.
 #' @param calibrated.mirror Whether or not the individually calibrated (but not the modelled) distributions should be drawn both up and down, quite a bit like fish or swans. Defaults to FALSE.
 #' @param calibrated.up Whether the calibrated distributions should be drawn upward or downward (the default, resembling the reflections of islands in the sea, or swimming animals if you wish)
-#' @param modelled.ex Exaggaration of the heights of the age-modelled distributions. Calculated automatically by default. Note that more precise ages peak higher than ages with lower precision.
+#' @param modelled.ex Exaggeration of the heights of the age-modelled distributions. Calculated automatically by default. Note that more precise ages peak higher than ages with lower precision.
 #' @param modelled.mirror Whether or not the age-modelled distributions should be drawn both up and down, quite a bit like fish or swans. Defaults to FALSE.
 #' @param modelled.up Whether the age-modelled distributions should be drawn downward or upward (the default, resembling islands in the sea)
 #' @param BCAD The calendar scale of graphs and age output-files is in \code{cal BP} by default, but can be changed to BC/AD using \code{BCAD=TRUE}.
@@ -125,7 +125,7 @@ draw.strat <- function(name="mystrat", set=get('info'), structure=set$struc, y.s
   for(i in 1:ncol(ages)) {
     age <- density(ages[,i])
     age$y <- age$y / maxdens
-    hpds[[i]] <- rintcal::hpd(cbind(age$x, age$y))
+    hpds[[i]] <- rice::hpd(cbind(age$x, age$y))
 
     if(modelled.mirror)
       pol <- cbind(c(age$x, rev(age$x)), ages.positions[i]-modelled.ex*c(age$y, -rev(age$y))) else
@@ -142,7 +142,8 @@ draw.strat <- function(name="mystrat", set=get('info'), structure=set$struc, y.s
   if(structure$has.gaps) {
     gaps <- structure$gaps
     for(i in 1:nrow(gaps)) {
-      above <- max(which(structure$p < gaps[i,4]))
+      # above <- max(which(structure$p < gaps[i,4])) # commented 29 April 2024
+      above <- max(which(dets[,4] < gaps[i,4])) # p is the position index, whereas gaps[i,4] is the position "number"
       side <- ifelse(gap.pos==1, 1, 2)
       if(gap.pos==1) {
         age.above <- max(hpds[[above]][,-3])

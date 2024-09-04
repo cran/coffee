@@ -66,7 +66,7 @@ strat <- function(name="mystrat", strat.dir="strats", run=TRUE, its=5e4, burnin=
   start.time <- as.numeric(format(Sys.time(), "%s"))
   info <- read.strat(name, strat.dir, sep, normal, delta.R, delta.STD, t.a, t.b, cc)
   dat <- info$dets
-  struc <- structure(dat) # find the structure of the data frame. Will be saved into 'info' later on
+  struc <- structure(dat) # find the structure of the data frame. Will be saved into 'info' later on. 
   dets <- dat[which(struc$is.age),]
   gaps <- dat[which(struc$is.gap),]
 
@@ -98,19 +98,19 @@ strat <- function(name="mystrat", strat.dir="strats", run=TRUE, its=5e4, burnin=
   if(length(rc) > 0)
     if(min(rc) < 100) { # has postbomb dates (or close to being postbomb), which are terrestrial only. Check how rintcal's calibrate covers this
       if(1 %in% ccs) # NH
-        cc.1 <- rintcal::glue.ccurves(1, postbomb, cc.dir)
+        cc.1 <- glue.ccurves(1, postbomb, cc.dir)
       if(3 %in% ccs) # SH
-        cc.3 <- rintcal::glue.ccurves(3, postbomb, cc.dir)
+        cc.3 <- glue.ccurves(3, postbomb, cc.dir)
     } else {
         if(1 %in% ccs) # NH
-          cc.1 <- rintcal::ccurve(1, FALSE, cc.dir)
+          cc.1 <- ccurve(1, FALSE, cc.dir)
         if(3 %in% ccs) # SH
-          cc.3 <- rintcal::ccurve(3, FALSE, cc.dir)
+          cc.3 <- ccurve(3, FALSE, cc.dir)
       }
   if(2 %in% ccs)
-    cc.2 <- rintcal::ccurve(2, FALSE, cc.dir)
+    cc.2 <- ccurve(2, FALSE, cc.dir)
   if(4 %in% ccs)
-    cc.4 <- rintcal::ccurve(4, FALSE, cc.dir)
+    cc.4 <- ccurve(4, FALSE, cc.dir)
 
   # prepopulate non-varying values for the energy function
   dets.cc0 <- which(dets[,5] == 0) 
@@ -293,9 +293,8 @@ strat <- function(name="mystrat", strat.dir="strats", run=TRUE, its=5e4, burnin=
     assign_to_global("info", info)
 
   # draw the dates and relative information
-  if(length(dat[,5] == 10) > 0) # sites with undated levels need to be plotted as positions
-    y.scale <- "positions"
-
+  # if(length(dat[,5] == 10) > 0) # sites with undated levels need to be plotted as positions
+  #   y.scale <- "positions"
   dates <- draw.strat(name, info, struc, BCAD=BCAD, strat.dir=strat.dir, y.scale=y.scale, cc.dir=cc.dir, postbomb=postbomb, ybottom.lab=y.scale, min.its=min.its, ...)
 
 #  info <- draw.strat(name, info, struc, BCAD=BCAD, strat.dir=strat.dir, y.scale=y.scale, cc.dir=cc.dir, postbomb=postbomb, ybottom.lab=y.scale, ...)
@@ -315,13 +314,13 @@ strat <- function(name="mystrat", strat.dir="strats", run=TRUE, its=5e4, burnin=
     o <- order(within.hpds)
     pos.dates <- struc$pos.dates[o]
     message(round(mean(within.hpds),2),
-	  "% of the model ages fit within the ", 100*prob, 
-	  "% hpd ranges of the dates, with worst-fitting date ", 
-	  pos.dates[1], " (",
+      "% of the model's ages fit within the ", 100*prob,
+      "% hpd ranges of the dates, with worst-fitting date ",
+      pos.dates[1], " (",
       round(min(within.hpds),2), 
-	  "%) and best-fitting date ", 
-	  pos.dates[length(pos.dates)], 
-	  " (", round(max(within.hpds),2), "%)")
+      "%) and best-fitting date ",
+      pos.dates[length(pos.dates)],
+      " (", round(max(within.hpds),2), "%)")
 
     took <- as.numeric(format(Sys.time(), "%s")) - start.time
     if(run)

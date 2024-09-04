@@ -22,7 +22,7 @@ mytree <- rings()
 # Done running...
 # Removed a burn-in of 100
 # Thinning the MCMC by storing every 8 iterations
-# 79.71% of the model ages fit within the 95% hpd ranges of the dates, 
+# 79.71% of the model's ages fit within the 95% hpd ranges of the dates,
 # with worst-fitting date 2 (51.38%) and best-fitting date 4 (93.89%)
 # Run took 3.17 minutes
 
