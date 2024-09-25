@@ -1,10 +1,9 @@
 # todo:
-# check strat with calendar dates - do we need an upper boundary? Also add coffee.cleanup function because changing data in the .csv file doesn't always seem to feed through
-# plot: gaps are not plotted on the right depth if there's a block above them
+# check strat with calendar dates - do we need an upper boundary? 
+
+# plot: gaps are not plotted on the correct depth if there's a block above them
 
 # dates close to 0 14C BP (e.g. 260 +- 20) go wrong - too close to end cc? Add option youngest.age???
-
-# add optional circle symbol below each age-modelled mode, coloured according to the info$overlap value
 
 # add a strat option for multiple cores which share events?
 
